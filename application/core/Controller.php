@@ -57,4 +57,24 @@
 			echo $content;
 			exit;
 		}
+
+		function getMember(){
+			if($this->is_member){
+				echo $this->memberInfo;
+			} else {
+				echo "false";
+			}
+			exit;
+		}
+
+		function getLogin(){
+			$_SESSION['member'] = $this->model->getJSON("SELECT * FROM USR_MT where usr_nm = 'test'");
+			echo $_SESSION['member'];
+			exit;
+		}
+
+		function logout(){
+			session_destroy();
+			exit;
+		}
 	}
