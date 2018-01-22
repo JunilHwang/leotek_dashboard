@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteRule ^(css|js|img|component)$ public/ [L]
+RewriteRule ^(css|js|img|component)\/(.*)$ public/$1/$2 [L]
+RewriteRule ^([^.]*)$ index.php?method=$1 [L,QSA]
