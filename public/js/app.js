@@ -24,6 +24,7 @@ function app(){
 				template:getTemplate('login'),
 				created:function(){
 					$("#page-title").html('Leotek Dashboard Login');
+					setTimeout(function(){ $("[autofocus]").focus()});
 				}
 			},
 			'site':{
@@ -55,7 +56,36 @@ function site(){
 			template:getTemplate('content-01'),
 			data:function(){
 				return {
-					device:null
+					device:[],
+					indoor:[],
+					outdoor:[],
+					selectedOutdoor:null,
+					selectedIndoor:null,
+					loading:true
+				}
+			},
+			methods:{
+				scrolling:function(e){
+					var obj = $(".content-01 .list");
+					var obj2 = $(".scrollbar");
+					var scrollH = obj[0].scrollHeight;
+					var moving = e.deltaY/5;
+					var moving2 = (320/(scrollH-370))*moving;
+					var pos = obj.scrollTop()+moving;
+					var pos2 = parseInt(obj2.css("top"))+moving2;
+					if(pos2 < 0) pos2 = 0;
+					if(pos2 > 320) pos2 = 320;
+					if(scrollH != 370){
+						obj.scrollTop(pos);
+						obj2.css({top:pos2+"px"});
+					}
+				},
+				selectIndoor:function(obj){
+					this.selectedIndoor = obj;
+				},
+				selectOutdoor:function(obj){
+					this.selectedOutdoor = obj;
+					console.log(obj);
 				}
 			},
 			created:function(){
@@ -66,10 +96,27 @@ function site(){
 						userid:bus.member.USR_ID
 					},
 					success:function(data){
-						_this.device = JSON.parse(data);
+						var device = JSON.parse(data).Data;
+						var indoor = [], outdoor = [];
+						var obj;
+						if(device) for(var i=0, len = device.length; i<len; i++){
+							obj = device[i];
+							if(obj.DVC_CD == '03'){
+								outdoor.push(obj);
+							} else {
+								indoor.push(obj);
+							}
+						}
+						_this.device = device;
+						_this.indoor = indoor;
+						_this.outdoor = outdoor;
+						_this.loading = false;
 					}
 				}
-				db.get(option);
+				db.getDevice(option);
+				setInterval(function(){
+					db.getDevice(option)
+				},1000*60);
 			}
 		}
 	}
@@ -92,3 +139,17 @@ function getTemplate(file,option){
 	})
 	return text;
 }
+
+function customScrollLoad(){
+	if($(".custom_scroll").length){
+		var obj = $(".content-01 .list");
+		var scrollH = obj[0].scrollHeight;
+		if(scrollH <= 370){
+			$(".custom_scroll").hide();
+		} else {
+			$(".custom_scroll").show();
+		}
+	}
+}
+
+$(window).on("load resize",customScrollLoad)

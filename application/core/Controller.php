@@ -1,6 +1,6 @@
 <?php
 	class Controller {
-
+		private $callUrl = "http://aws.airtumbler.co:9350/ATDataService";
 		function run(){
 			$obj = new Controller();
 			$obj->init();
@@ -50,10 +50,68 @@
 			$columns = "";
 			foreach($_GET as $key=>$val){
 				if(in_array($key,['method','table'])) continue;
+				if($key == 'pwd') $val = base64_encode("leotek".$val);
 				$columns .= "&{$key}={$val}";
 			}
 			$columns = "?". substr($columns,1);
-			$content = file_get_contents("http://aws.airtumbler.co:9350/ATDataService/{$_GET['table']}{$columns}");
+			$content = file_get_contents("{$this->callUrl}/{$_GET['table']}{$columns}");
+			echo $content;
+			exit;
+		}
+
+		function getDevice(){
+			$columns = "";
+			foreach($_GET as $key=>$val){
+				if(in_array($key,['method','table'])) continue;
+				$columns .= "&{$key}={$val}";
+			}
+			$columns = "?". substr($columns,1);
+			$path = APP_PATH."/json/device_info_{$_GET['userid']}.json";
+			if(!file_exists($path)){
+				setcookie("device_info","created",time()+60);
+				$content = file_get_contents("{$this->callUrl}/{$_GET['table']}{$columns}");
+				$content = json_decode($content);
+				if($content->Data) foreach($content->Data as $key=>$data){
+					$device_info = file_get_contents("{$this->callUrl}/GetRealMeterData?serialNo={$data->DVC_SRNO}");
+					$device_info = json_decode($device_info);
+					$color = "color4";
+					$score = 0;
+					$data = (Array)$data;
+					$data['co2'] = 0;
+					$data['dust'] = 0;
+					$data['tvoc'] = 0;
+					$data['temp'] = 0;
+					$data['hum'] = 0;
+					if($device_info->Data){
+						$score = ceil((intval($device_info->Data->CIAQI)/450)*100);
+						if($score < 25){
+							$color = "color4";
+						} else if($score < 50){
+							$color = "color3";
+						} else if($score < 75){
+							$color = "color2";
+						} else if($score < 100){
+							$color = "color1";
+						}
+						$data['co2'] = $device_info->Data->CO2_IDX;
+						$data['dust'] = $device_info->Data->DUST_IDX;
+						$data['tvoc'] = $device_info->Data->TVOC_IDX;
+						$data['temp'] = $device_info->Data->TEMP;
+						$data['hum'] = $device_info->Data->HUM;
+					}
+					$data['color'] = $color;
+					$data['score'] = $score;
+					$data = (Object)$data;
+					$content->Data[$key] = $data;
+				}
+				$content = json_encode($content);
+				file_put_contents($path,$content);
+			} else {
+				$content = file_get_contents($path);
+				if(!isset($_COOKIE['device_info'])){
+					@unlink($path);
+				}
+			}
 			echo $content;
 			exit;
 		}
@@ -68,8 +126,13 @@
 		}
 
 		function getLogin(){
-			$_SESSION['member'] = $this->model->getJSON("SELECT * FROM USR_MT where usr_nm = 'test'");
-			echo $_SESSION['member'];
+			$member = $this->model->fetch("SELECT * FROM USR_MT where USR_ID = '{$_GET['id']}'");
+			if($member){
+				$_SESSION['member'] = $member = json_encode($member);
+			} else {
+				$member = "false";
+			}
+			echo $member;
 			exit;
 		}
 

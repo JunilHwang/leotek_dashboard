@@ -97,7 +97,7 @@ img{max-width:100%;max-height:100%;border:0;margin:0;padding:0;}
 		img{margin-top:-10px;}
 		span{display:inline-block;margin-left:10px;}
 	}
-	.util{display:flex;font-size:18px;font-family:$font2;
+	.util{display:flex;font-size:18px;
 		li{margin-left:40px;}
 		.user:before{content:"";width:35px;height:35px;display:inline-block;background:url(../img/icon-user.png) no-repeat;vertical-align:middle;margin-right:15px;}
 		.logout:before{content:"";width:35px;height:35px;display:inline-block;background:url(../img/icon-logout.png) no-repeat;vertical-align:middle;margin-right:15px;}
@@ -125,7 +125,7 @@ img{max-width:100%;max-height:100%;border:0;margin:0;padding:0;}
 		&:before{content:"";width:10px;height:10px;display:inline-block;vertical-align:middle;margin-right:15px;background:$color5;margin-top:-3px;}
 	}
 }
-.content-01{
+.content-01{position:relative;
 	@include clr();
 	>ul{float:left;}
 	.selected{display:flex;
@@ -153,6 +153,7 @@ img{max-width:100%;max-height:100%;border:0;margin:0;padding:0;}
 			li:nth-child(5){border-bottom:none;}
 		}
 		.unit{font-size:13px;}
+		.please{text-align:center;display:flex;flex-flow:column;justify-content:center;height:100%;font-size:45px;font-family:$font2;font-weight:300;}
 	}
 	.list{width:calc(100% - 595px);margin-left:40px;overflow:hidden;height:370px;
 		h3{font-size:18px;margin-bottom:10px;
@@ -169,10 +170,16 @@ img{max-width:100%;max-height:100%;border:0;margin:0;padding:0;}
 				}
 				a{display:block;background:#fff;border-radius:5px;padding:10px 10px 10px 40px;text-decoration:none;font-size:18px;position:relative;word-break:break-all;
 					&:before{content:"";width:15px;height:15px;border-radius:3px;background:#fff;display:inline-block;margin-right:15px;position:absolute;left:10px;top:14px;}
+					&:after{content:"";position:absolute;left:0;top:0;bottom:0;right:0;background:fade-out(#000,.75);z-index:20;border-radius:5px;opacity:0;transition:.3s;}
+					&:hover:after{opacity:1;}
 				}
 			}
 			+li{margin-top:20px;}
+			&.loading{text-align:center;height:100%;;line-height:370px;font-size:40px;}
 		}
+	}
+	.custom_scroll{position:absolute;right:0;bottom:0;width:1px;background:#666;height:370px;
+		.scrollbar{position:absolute;width:5px;height:50px;background:#333;right:-2px;top:0;display:block;cursor:pointer;}
 	}
 }
 

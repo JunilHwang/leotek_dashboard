@@ -1,94 +1,98 @@
 <section class="content-01">
     <h2 class="content-title">AirTumbler Elementary School</h2>
     <ul class="selected">
-        <li>
-            <strong>Classroom 1-1</strong>
-            <div class="state">
-                <div class="cycle color1"></div>
-                <div class="score">
-                    <span>Score</span>
-                    <strong>80</strong>
+        <li class="indoor">
+            <template v-if="selectedIndoor">
+                <strong v-html="selectedIndoor.DVC_NM" />
+                <div class="state">
+                    <div :class="'cycle '+selectedIndoor.color"></div>
+                    <div class="score">
+                        <span>Score</span>
+                        <strong v-html="selectedIndoor.score">
+                    </div>
                 </div>
-            </div>
-            <ul>
-                <li>
-                    <span class="lbl">Temp.</span>
-                    <span class="desc">26.3  <span class="unit">℃</span></span>
-                </li>
-                <li>
-                    <span class="lbl">Hum.</span>
-                    <span class="desc">52 <span class="unit">%</span></span>
-                </li>
-                <li>
-                    <span class="lbl">Dust</span>
-                    <span class="desc">17 <span class="unit">μg</span></span>
-                </li>
-                <li>
-                    <span class="lbl">Co2</span>
-                    <span class="desc">825 <span class="unit">ppm</span></span>
-                </li>
-                <li>
-                    <span class="lbl">TVOC</span>
-                    <span class="desc">121 <span class="unit">ppb</span></span>
-                </li>
-            </ul>
+                <ul>
+                    <li>
+                        <span class="lbl">Temp.</span>
+                        <span class="desc">{{selectedIndoor.temp}}  <span class="unit">℃</span></span>
+                    </li>
+                    <li>
+                        <span class="lbl">Hum.</span>
+                        <span class="desc">{{selectedIndoor.hum}} <span class="unit">%</span></span>
+                    </li>
+                    <li>
+                        <span class="lbl">Dust</span>
+                        <span class="desc">{{selectedIndoor.dust}} <span class="unit">μg</span></span>
+                    </li>
+                    <li>
+                        <span class="lbl">Co2</span>
+                        <span class="desc">{{selectedIndoor.co2}} <span class="unit">ppm</span></span>
+                    </li>
+                    <li>
+                        <span class="lbl">TVOC</span>
+                        <span class="desc">{{selectedIndoor.tvoc}} <span class="unit">ppb</span></span>
+                    </li>
+                </ul>
+            </template>
+            <tmeplate v-else>
+                <p class="please">SELECT<br>INDOOR</p>
+            </tmeplate>
         </li>
-        <li>
-            <strong>Playground</strong>
-            <div class="state">
-                <div class="cycle color4"></div>
-                <div class="score">
-                    <span>Score</span>
-                    <strong>23</strong>
+        <li class="outdoor">
+            <template v-if="selectedOutdoor">
+                <strong v-html="selectedOutdoor.DVC_NM" />
+                <div class="state">
+                    <div :class="'cycle '+selectedOutdoor.color"></div>
+                    <div class="score">
+                        <span>Score</span>
+                        <strong v-html="selectedOutdoor.score">
+                    </div>
                 </div>
-            </div>
-            <ul>
-                <li>
-                    <span class="lbl">Temp.</span>
-                    <span class="desc">26.3  <span class="unit">℃</span></span>
-                </li>
-                <li>
-                    <span class="lbl">Hum.</span>
-                    <span class="desc">52 <span class="unit">%</span></span>
-                </li>
-                <li>
-                    <span class="lbl">Dust</span>
-                    <span class="desc">17 <span class="unit">μg</span></span>
-                </li>
-            </ul>
+                <ul>
+                    <li>
+                        <span class="lbl">Temp.</span>
+                        <span class="desc">{{selectedOutdoor.temp}}  <span class="unit">℃</span></span>
+                    </li>
+                    <li>
+                        <span class="lbl">Hum.</span>
+                        <span class="desc">{{selectedOutdoor.hum}} <span class="unit">%</span></span>
+                    </li>
+                    <li>
+                        <span class="lbl">Dust</span>
+                        <span class="desc">{{selectedOutdoor.dust}} <span class="unit">μg</span></span>
+                    </li>
+                </ul>
+            </template>
+            <tmeplate v-else>
+                <p class="please">SELECT<br>OUTDOOR</p>
+            </tmeplate>
         </li>
     </ul>
-    <ul class="list">
-        <li>
+    <ul class="list" @wheel="scrolling">
+        <li v-if="outdoor.length > 0">
             <h3>Outdoor</h3>
             <ul>
-                <li class="color4"><a href="#">Playground</a></li>
-                <li class="color1"><a href="#">Gym</a></li>
+                <li v-for="obj in outdoor" :class="obj.color">
+                    <a href="#" v-html="obj.DVC_NM" @click="selectOutdoor(obj)" />
+                </li>
             </ul>
         </li>
-        <li>
+        <li v-if="indoor.length > 0">
             <h3>Indoor</h3>
             <ul>
-                <li class="color1"><a href="#">Classroom 1-1</a></li>
-                <li class="color2"><a href="#">Classroom 1-2</a></li>
-                <li class="color3"><a href="#">Classroom 1-3</a></li>
-                <li class="color4"><a href="#">Classroom 1-4</a></li>
-                <li class="color2"><a href="#">Classroom 2-1</a></li>
-                <li class="color2"><a href="#">Classroom 2-2</a></li>
-                <li class="color3"><a href="#">Classroom 2-3</a></li>
-                <li class="color1"><a href="#">Classroom 2-4</a></li>
-                <li class="color4"><a href="#">Classroom 3-1</a></li>
-                <li class="color4"><a href="#">Classroom 3-2</a></li>
-                <li class="color3"><a href="#">Classroom 3-3</a></li>
-                <li class="color3"><a href="#">Classroom 3-4</a></li>
-                <li class="color4"><a href="#">Classroom 4-1</a></li>
-                <li class="color2"><a href="#">Classroom 4-2</a></li>
-                <li class="color1"><a href="#">Classroom 4-3</a></li>
-                <li class="color2"><a href="#">Classroom 4-4</a></li>
+                <li v-for="obj in indoor" :class="obj.color">
+                    <a href="#" v-html="obj.DVC_NM" @click="selectIndoor(obj)" />
+                </li>
             </ul>
         </li>
+        <li v-if="loading == true" class="loading">
+            Loading...
+        </li>
+        <li v-if="loading == false && outdoor.length == 0 && indoor.length == 0" class="loading">
+            There is no registered device.
+        </li>
     </ul>
-    <div class="custom_scroll">
-        
+    <div class="custom_scroll" style="display:none;">
+        <span class="scrollbar"></span>
     </div>
 </section>
