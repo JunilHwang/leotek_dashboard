@@ -68,7 +68,7 @@
 			$columns = "?". substr($columns,1);
 			$path = APP_PATH."/json/device_info_{$_GET['userid']}.json";
 			if(!file_exists($path)){
-				setcookie("device_info","created",time()+60);
+				setcookie("device_info","created",time()+6000);
 				$content = file_get_contents("{$this->callUrl}/{$_GET['table']}{$columns}");
 				$content = json_decode($content);
 				if($content->Data) foreach($content->Data as $key=>$data){
@@ -138,6 +138,25 @@
 
 		function logout(){
 			session_destroy();
+			exit;
+		}
+
+		function getGraph(){
+			$start = isset($_GET['start']) ? $_GET['start'] : date("Y-m-d");
+			$end = isset($_GET['end']) ? $_GET['end']+" 23:59:59" : date("Y-m-d 23:59:59");
+			$srno = isset($_GET['srno']) ? $_GET['srno'] : 'LT-AT-SH-0046435';
+			$sql = "
+				SELECT  *,
+						left(convert(varchar, UPD_DT, 120),16) as upd_time
+				FROM 	MTR_MI_HIS
+				where 	DVC_SRNO = '{$srno}'
+				AND		UPD_DT  BETWEEN '{$start}' and '{$end}'
+				ORDER BY UPD_DT ASC
+			";
+			$list = $this->model->fetchAll($sql);
+			echo "<pre>";
+			print_r($list);
+			echo "</pre>";
 			exit;
 		}
 	}

@@ -59,8 +59,14 @@ function site(){
 					device:[],
 					indoor:[],
 					outdoor:[],
-					selectedOutdoor:null,
-					selectedIndoor:null,
+					selectedOutdoor:(function(){
+					var obj = localStorage.getItem('outdoor');
+						return obj ? JSON.parse(obj) : null;
+					}()),
+					selectedIndoor:(function(){
+						var obj = localStorage.getItem('indoor');
+						return obj ? JSON.parse(obj) : null;
+					}()),
 					loading:true
 				}
 			},
@@ -81,11 +87,30 @@ function site(){
 					}
 				},
 				selectIndoor:function(obj){
+					obj = this.getDetail(obj);
 					this.selectedIndoor = obj;
+					localStorage.setItem("indoor",JSON.stringify(obj));
 				},
 				selectOutdoor:function(obj){
+					obj = this.getDetail(obj);
 					this.selectedOutdoor = obj;
-					console.log(obj);
+					localStorage.setItem("outdoor",JSON.stringify(obj));
+				},
+				getDetail:function(obj){
+					var option = {
+						data:{
+							table:'GetDayMeterData',
+							serialNo:obj.DVC_SRNO,
+							id:bus.member.USR_ID
+						},
+						async:false,
+						success:function(data){
+							obj['list'] = JSON.parse(data).Data;
+						}
+					}
+					db.get(option);
+					console.log(obj.list);
+					return obj;
 				}
 			},
 			created:function(){
@@ -106,6 +131,7 @@ function site(){
 							} else {
 								indoor.push(obj);
 							}
+							//console.log(obj.DVC_SRNO);
 						}
 						_this.device = device;
 						_this.indoor = indoor;
@@ -116,8 +142,11 @@ function site(){
 				db.getDevice(option);
 				setInterval(function(){
 					db.getDevice(option)
-				},1000*60);
+				},1000*6000);
 			}
+		},
+		'content-02':{
+			template:getTemplate('content-02')
 		}
 	}
 }
@@ -140,7 +169,7 @@ function getTemplate(file,option){
 	return text;
 }
 
-function customScrollLoad(){
+/*function customScrollLoad(){
 	if($(".custom_scroll").length){
 		var obj = $(".content-01 .list");
 		var scrollH = obj[0].scrollHeight;
@@ -152,4 +181,4 @@ function customScrollLoad(){
 	}
 }
 
-$(window).on("load resize",customScrollLoad)
+$(window).on("load resize",customScrollLoad)*/
