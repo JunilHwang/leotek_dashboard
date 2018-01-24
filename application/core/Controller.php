@@ -143,7 +143,7 @@
 
 		function getGraph(){
 			$start = isset($_GET['start']) ? $_GET['start'] : date("Y-m-d");
-			$end = isset($_GET['end']) ? $_GET['end']+" 23:59:59" : date("Y-m-d 23:59:59");
+			$end = isset($_GET['end']) ? $_GET['end']." 23:59:59" : date("Y-m-d 23:59:59");
 			$srno = isset($_GET['srno']) ? $_GET['srno'] : 'LT-AT-SH-0046435';
 			$sql = "
 				SELECT  *,
@@ -153,10 +153,10 @@
 				AND		UPD_DT  BETWEEN '{$start}' and '{$end}'
 				ORDER BY UPD_DT ASC
 			";
-			$list = $this->model->fetchAll($sql);
-			echo "<pre>";
+			echo $this->model->getJSON($sql);
+/*			echo "<pre>";
 			print_r($list);
-			echo "</pre>";
+			echo "</pre>";*/
 			exit;
 		}
 	}

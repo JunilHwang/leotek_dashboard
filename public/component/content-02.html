@@ -1,6 +1,15 @@
 <section class="content-02">
     <h2 class="content-title">Timeline</h2>
+	<ul class="tab" v-if="bus.selectedIndoor && bus.selectedOutdoor">
+		<li v-if="bus.selectedIndoor" :class="bus.selectedIndoor.color + activeIn"><a href="#" @click="active('in');">{{bus.selectedIndoor.DVC_NM}}</a></li>
+		<li v-if="bus.selectedOutdoor" :class="bus.selectedOutdoor.color + activeOut"><a href="#" @click="active('out');">{{bus.selectedOutdoor.DVC_NM}}</a></li>
+	</ul>
+	<p class="selectDate">
+		<input type="text" name="start" class="datepicker start" size="10" readonly onchange="bus.getGraph()"> ~
+		<input type="text" name="end" class="datepicker end" size="10" readonly onchange="bus.getGraph()">
+	</p>
+    {{bus.graphData ? bus.graphData.length : 0}}
     <div class="graph">
-        
+    	<canvas id="graph"></canvas>
     </div>
 </section>

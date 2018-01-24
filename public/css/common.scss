@@ -90,7 +90,7 @@ img{max-width:100%;max-height:100%;border:0;margin:0;padding:0;}
     .login-btm{display:flex;justify-content:space-between;}
 }
 /* header */
-.header{position:fixed;left:0;top:0;right:0;
+.header{position:fixed;left:0;top:0;right:0;z-index:100;
 	.top{height:90px;background:$color5;line-height:90px;display:flex;justify-content:space-between;padding:0 30px;color:#FFF;}
 	.logo{font-size:25px;
 		a{text-decoration:none;}
@@ -182,8 +182,24 @@ img{max-width:100%;max-height:100%;border:0;margin:0;padding:0;}
 		.scrollbar{position:absolute;width:5px;height:50px;background:#333;right:-2px;top:0;display:block;cursor:pointer;}
 	} */
 }
-.conten-02{
-	.graph{background:#fff;}
+.content-02{
+	.graph{background:#fff;padding-bottom:30%;position:relative;border-radius:5px;box-shadow:0 0 20px #aaa;}
+	.tab{display:flex;margin-bottom:20px;
+		li{margin-right:10px;
+			&.color1>a:before{background:$color1;}
+			&.color2>a:before{background:$color2;}
+			&.color3>a:before{background:$color3;}
+			&.color4>a:before{background:$color4;}
+			&.active>a{background:darken($color1,20%);color:#fff;transition:.3s;}
+		}
+		a{display:block;background:#fff;border-radius:5px;padding:10px 10px 10px 40px;text-decoration:none;font-size:18px;position:relative;word-break:break-all;
+			&:before{content:"";width:15px;height:15px;border-radius:3px;background:#fff;display:inline-block;margin-right:15px;position:absolute;left:10px;top:14px;}
+			&:after{content:"";position:absolute;left:0;top:0;bottom:0;right:0;background:fade-out(#000,.75);z-index:20;border-radius:5px;opacity:0;transition:.3s;}
+			&:hover:after{opacity:1;}
+		}
+	}
+	.selectDate{margin-bottom:30px;}
+	#graph{position:absolute;left:0;top:0;width:100%;height:100%;}
 }
 
 /* public class */
