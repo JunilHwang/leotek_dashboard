@@ -13,6 +13,7 @@ var bus = new Vue({
 			return obj ? JSON.parse(obj) : null;
 		}()),
 		activeData:null,
+		graphPoint:null,
 		graphData:null
 	},
 	computed:{
@@ -23,7 +24,8 @@ var bus = new Vue({
 		},
 		getGraph:function(){
 			var _this = this;
-			var start_date = getNow(), end_date = getNow();
+			var start_date = "2018-01-24", end_date = "2018-01-25";
+			//var start_date = getNow(), end_date = getNow();
 			if($(".datepicker.start").length){
 				start_date = $(".datepicker.start").val();
 				end_date = $(".datepicker.end").val();
@@ -33,7 +35,9 @@ var bus = new Vue({
 				url:'./getGraph',
 				data:{srno:_this.activeData.DVC_SRNO,start:start_date,end:end_date},
 				success:function(data){
-					_this.graphData = JSON.parse(data);
+					var jsonData = JSON.parse(data);
+					_this.graphData = jsonData.data;
+					_this.graphPoint = jsonData.point;
 					graphCreated();
 				}
 			})
@@ -274,28 +278,58 @@ function getNow(){
 
 function graphCreated(){
 	var data = bus.graphData;
-	var type = 'DUST';
+	var point = bus.graphPoint;
+	var type = 'CO2_IDX';
+	var max = point[('MAX_'+type).replace("_IDX","")];
+	var min = point[('MIN_'+type).replace("_IDX","")];
 	var canvas = document.getElementById('graph'),
 		context = canvas.getContext('2d'),
-		width = data.length,
-		height = $("#graph").height();
-	canvas.width = $("#graph").width();
-	canvas.height = $("#graph").height();
-	//var stats = [40, 65, 72, 120, 250, 87, 100, 42];
+		ratio = 1,
+		move_left_by = 1,
+		step = 1,
+		width = canvas.width = $("#graph").width(),
+		height = canvas.height = $("#graph").height();
+	var renderData = [];
+	if(max != 0) if(height < max){
+		ratio = max/height;
+		height = max;
+		console.log(height);
+	} else {
+		ratio = height/max;
+	}
+	if(data.length > 0) if(width >= data.length){
+		move_left_by = width/data.length;
+		width = data.length;
+		renderData = data;
+		for(var i=0,len=data.length;i<len;i++){
+			renderData[i] = data[i][type];
+		}
+	} else {
+		step = parseInt(data.length/width)+1;
+		var avg, cnt;
+		for(var i=0,len=data.length;i<len;i+=step){
+			avg = cnt = 0
+			for(var j=i;j<i+step;j++){
+				if(!data[j]) break;
+				avg += parseInt(data[j][type]);
+				cnt++;
+			}
+			if(cnt != 0) avg = avg/cnt;
+			renderData.push(avg);
+		}
+		width = renderData.length;
+	}
+	if(canvas.width > width){
+		move_left_by = canvas.width/width;
+	}
 	context.translate(0, height);
 	context.scale(1, -1);
 	context.fillStyle = '#fff';
 	context.fillRect(0, 0, width, height);
-	var ratio = height/100;
 	var left = 0,
-		prev_stat = data[0][type]*ratio,
-		move_left_by = 1;
-	if(width < canvas.width){
-		move_left_by = canvas.width / width;
-		width = canvas.width;
-	}
-	for(var i=0,len=data.length;i<len;i++) {
-		the_stat = data[i][type]*ratio;
+		prev_stat = renderData[0]*ratio;
+	for(var i=0,len=renderData.length;i<len;i++) {
+		the_stat = renderData[i]*ratio;
 		context.beginPath();
 		context.moveTo(left, prev_stat);
 		context.lineTo(left+move_left_by, the_stat);

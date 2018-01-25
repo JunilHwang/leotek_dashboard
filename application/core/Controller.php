@@ -145,15 +145,34 @@
 			$start = isset($_GET['start']) ? $_GET['start'] : date("Y-m-d");
 			$end = isset($_GET['end']) ? $_GET['end']." 23:59:59" : date("Y-m-d 23:59:59");
 			$srno = isset($_GET['srno']) ? $_GET['srno'] : 'LT-AT-SH-0046435';
-			$sql = "
+			$data_sql = "
 				SELECT  *,
 						left(convert(varchar, UPD_DT, 120),16) as upd_time
 				FROM 	MTR_MI_HIS
 				where 	DVC_SRNO = '{$srno}'
 				AND		UPD_DT  BETWEEN '{$start}' and '{$end}'
-				ORDER BY UPD_DT ASC
 			";
-			echo $this->model->getJSON($sql);
+			$point_sql = "
+				SELECT 
+					MAX(t.TVOC_IDX) as MAX_TVOC,
+					MAX(t.CO2_IDX) as MAX_CO2,
+					MAX(t.DUST_IDX) as MAX_DUST,
+					MAX(t.TEMP) as MAX_TEMP,
+					MAX(t.HUM) as MAX_HUM,
+					MIN(t.TVOC_IDX) as MIN_TVOC,
+					MIN(t.CO2_IDX) as MIN_CO2,
+					MIN(t.DUST_IDX) as MIN_DUST,
+					MIN(t.TEMP) as MIN_TEMP,
+					MIN(t.HUM) as MIN_HUM
+				from ($data_sql) t
+			";
+			$data_sql .= " ORDER BY UPD_DT ASC";
+			$data = $this->model->fetchAll($data_sql);
+			$point = $this->model->fetch($point_sql);
+			$json_data = [];
+			$json_data['data'] = $data;
+			$json_data['point'] = $point;
+			echo json_encode($json_data);
 /*			echo "<pre>";
 			print_r($list);
 			echo "</pre>";*/
