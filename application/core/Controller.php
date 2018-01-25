@@ -154,14 +154,16 @@
 			";
 			$point_sql = "
 				SELECT 
-					MAX(t.TVOC_IDX) as MAX_TVOC,
-					MAX(t.CO2_IDX) as MAX_CO2,
-					MAX(t.DUST_IDX) as MAX_DUST,
+					MAX(t.CIAQI) as MAX_CIAQI,
+					MAX(t.TVOC_IDX) as MAX_TVOC_IDX,
+					MAX(t.CO2_IDX) as MAX_CO2_IDX,
+					MAX(t.DUST_IDX) as MAX_DUST_IDX,
 					MAX(t.TEMP) as MAX_TEMP,
 					MAX(t.HUM) as MAX_HUM,
-					MIN(t.TVOC_IDX) as MIN_TVOC,
-					MIN(t.CO2_IDX) as MIN_CO2,
-					MIN(t.DUST_IDX) as MIN_DUST,
+					MIN(t.CIAQI) as MIN_CIAQI,
+					MIN(t.TVOC_IDX) as MIN_TVOC_IDX,
+					MIN(t.CO2_IDX) as MIN_CO2_IDX,
+					MIN(t.DUST_IDX) as MIN_DUST_IDX,
 					MIN(t.TEMP) as MIN_TEMP,
 					MIN(t.HUM) as MIN_HUM
 				from ($data_sql) t

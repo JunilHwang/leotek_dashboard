@@ -14,7 +14,8 @@ var bus = new Vue({
 		}()),
 		activeData:null,
 		graphPoint:null,
-		graphData:null
+		graphData:null,
+		graphType:'TEMP'
 	},
 	computed:{
 	},
@@ -24,8 +25,8 @@ var bus = new Vue({
 		},
 		getGraph:function(){
 			var _this = this;
-			var start_date = "2018-01-24", end_date = "2018-01-25";
-			//var start_date = getNow(), end_date = getNow();
+			var start_date = getNow(), end_date = getNow();
+			//var start_date = "2018-01-22", end_date = "2018-01-23";
 			if($(".datepicker.start").length){
 				start_date = $(".datepicker.start").val();
 				end_date = $(".datepicker.end").val();
@@ -38,7 +39,7 @@ var bus = new Vue({
 					var jsonData = JSON.parse(data);
 					_this.graphData = jsonData.data;
 					_this.graphPoint = jsonData.point;
-					graphCreated();
+					graphCreate();
 				}
 			})
 		}
@@ -176,7 +177,15 @@ function site(){
 			data:function(){
 				return {
 					start:getNow(),
-					end:getNow()
+					end:getNow(),
+					graphType:[
+						{id:'1',type:'CIAQI'},
+						{id:'2',type:'TEMP'},
+						{id:'3',type:'HUM'},
+						{id:'4',type:'DUST_IDX'},
+						{id:'5',type:'CO2_IDX'},
+						{id:'6',type:'TVOC_IDX'},
+					]
 				}
 			},
 			computed:{
@@ -202,7 +211,9 @@ function site(){
 				bus.getGraph();
 			},
 			mounted:function(){
-				$(".datepicker").datepicker().val(getNow());
+				$(".datepicker.start").datepicker();
+				$(".datepicker.end").datepicker({"minDate":new Date()})
+				$(".datepicker").val(getNow());
 			}
 		}
 	}
@@ -276,33 +287,36 @@ function getNow(){
 	return now;
 }
 
-function graphCreated(){
+function graphCreate(){
 	var data = bus.graphData;
 	var point = bus.graphPoint;
-	var type = 'CO2_IDX';
-	var max = point[('MAX_'+type).replace("_IDX","")];
-	var min = point[('MIN_'+type).replace("_IDX","")];
+	var type = bus.graphType;
+	var min = parseFloat(point['MIN_'+type]) ? parseFloat(point['MIN_'+type]) : 0;
+	var max = parseFloat(point['MAX_'+type]) - min;
 	var canvas = document.getElementById('graph'),
 		context = canvas.getContext('2d'),
 		ratio = 1,
 		move_left_by = 1,
-		step = 1,
-		width = canvas.width = $("#graph").width(),
-		height = canvas.height = $("#graph").height();
-	var renderData = [];
+		step = 1;
+	canvas.width = $("#graph").width();
+	canvas.height = $("#graph").height();
+	var width = canvas.width;
+	var height = canvas.height;
+	var renderData = [],
+		renderTime = [];
+	context.fillStyle = '#f5f5f5';
 	if(max != 0) if(height < max){
 		ratio = max/height;
 		height = max;
-		console.log(height);
 	} else {
 		ratio = height/max;
 	}
 	if(data.length > 0) if(width >= data.length){
 		move_left_by = width/data.length;
 		width = data.length;
-		renderData = data;
 		for(var i=0,len=data.length;i<len;i++){
-			renderData[i] = data[i][type];
+			renderData[i] = data[i][type] - min;
+			renderTime[i] = data[i]['UPD_DT'];
 		}
 	} else {
 		step = parseInt(data.length/width)+1;
@@ -311,30 +325,73 @@ function graphCreated(){
 			avg = cnt = 0
 			for(var j=i;j<i+step;j++){
 				if(!data[j]) break;
-				avg += parseInt(data[j][type]);
+				avg += parseFloat(data[j][type]) ? parseFloat(data[j][type]) - min : 0;
 				cnt++;
 			}
 			if(cnt != 0) avg = avg/cnt;
 			renderData.push(avg);
+			renderTime.push(data[i]['UPD_DT']);
+			console.log(avg);
 		}
 		width = renderData.length;
 	}
 	if(canvas.width > width){
 		move_left_by = canvas.width/width;
 	}
-	context.translate(0, height);
-	context.scale(1, -1);
-	context.fillStyle = '#fff';
-	context.fillRect(0, 0, width, height);
+	var plusHeight = canvas.height*0.1;
+	context.scale(0.9,0.85);
+	context.translate(canvas.width*0.075, 0);
+	var rowHeight = parseInt((canvas.height)/5);
+	var statHeight = max/5;
+	var commentMax = max+min;
+	context.font = "12px Arial";
+	context.fillStyle = "#666";
+	for(var i=0;i<=5; i++){
+		var row = canvas.height - (rowHeight*i) + plusHeight;
+		var text = parseInt((min+(statHeight*i))*100)/100
+		context.beginPath();
+		context.moveTo(0,row);
+		context.lineTo(canvas.width,row);
+		context.strokeStyle = '#bebebe';
+		context.lineWidth = 1;
+		context.lineCap = 'round';
+		context.stroke();
+		context.fillText(text,-75,row+5);
+	}
+	var len=renderTime.length;
+	var renderTime2 = [];
+	var num = 0;
+	var wr = parseInt(canvas.width/12);
+	var plusStep = parseInt(len/12)+1;
+	for(var i=0;i<=len;i+=plusStep){
+		var date = new Date(renderTime[i]);
+		var month = date.getMonth()+1;
+		var day = date.getDate();
+		var hour = date.getHours();
+		var minutes = date.getMinutes();
+		var leftPoint = (wr*num++)+30;
+		var newDate;
+		if(month < 10) month = "0"+month;
+		if(day < 10) day = "0"+day;
+		if(hour < 10) hour = "0"+hour;
+		if(minutes < 10) minutes = "0"+minutes;
+		newDate = month+"-"+day+" "+hour+":"+"00";
+		if(len<700){
+			newDate = month+"-"+day+" "+hour+":"+minutes;
+		}
+		context.fillText(newDate,leftPoint,canvas.height+plusHeight+25);
+	}
 	var left = 0,
-		prev_stat = renderData[0]*ratio;
+		prev_stat = canvas.height - (renderData[0]*ratio) + plusHeight;
 	for(var i=0,len=renderData.length;i<len;i++) {
-		the_stat = renderData[i]*ratio;
+		the_stat = canvas.height - (renderData[i]*ratio) + plusHeight;
 		context.beginPath();
 		context.moveTo(left, prev_stat);
 		context.lineTo(left+move_left_by, the_stat);
-		context.lineWidth = 2;
+		context.lineWidth = 1;
 		context.lineCap = 'round';
+		context.lineJoin = 'round';
+		context.strokeStyle = '#000';
 		context.stroke();
 		prev_stat = the_stat;
 		left += move_left_by;
