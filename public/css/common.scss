@@ -220,7 +220,19 @@ img{max-width:100%;max-height:100%;border:0;margin:0;padding:0;}
 		.icon5{margin-top:-4px;}
 		.icon6{margin-top:-4px;}
 	}
+	.graph_mask{position:absolute;left:0;top:0;bottom:0;right:0;background:fade-out(#000,.75);display:flex;font-size:50px;align-items:center;justify-content:center;z-index:20;color:#fff;}
 	#graph{position:absolute;left:0;top:0;width:100%;height:100%;}
+}
+.content-03{
+	.list{background:#FFF;box-shadow:0 0 10px #bbb;padding:30px;border-radius:10px;}
+	.table_wrap{overflow-y:auto;height:500px;}
+	table{border-spacing:0;border-collapse:collapse;font-size:18px;text-align:center;}
+	th{border-bottom:2px solid #666;height:50px;}
+	td{border-bottom:1px solid #bebebe;height:50px;}
+	h3{font-size:40px;margin-bottom:40px;text-align:center;}
+}
+.content-04{
+	#map{height:800px;}
 }
 
 /* public class */
@@ -260,3 +272,4 @@ label.file{border:1px solid #ddd;display:inline-block;padding:7px 20px;width:100
 	.title{border-bottom:1px solid #ddd;padding-bottom:15px;margin-bottom:15px;font-size:25px;}
 	.layerContent>div{padding:30px;}
 }
+

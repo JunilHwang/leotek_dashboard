@@ -154,7 +154,17 @@ img { max-width: 100%; max-height: 100%; border: 0; margin: 0; padding: 0; }
 .content-02 .graph_type .icon3 { margin-top: -4px; }
 .content-02 .graph_type .icon5 { margin-top: -4px; }
 .content-02 .graph_type .icon6 { margin-top: -4px; }
+.content-02 .graph_mask { position: absolute; left: 0; top: 0; bottom: 0; right: 0; background: rgba(0, 0, 0, 0.25); display: flex; font-size: 50px; align-items: center; justify-content: center; z-index: 20; color: #fff; }
 .content-02 #graph { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+
+.content-03 .list { background: #FFF; box-shadow: 0 0 10px #bbb; padding: 30px; border-radius: 10px; }
+.content-03 .table_wrap { overflow-y: auto; height: 500px; }
+.content-03 table { border-spacing: 0; border-collapse: collapse; font-size: 18px; text-align: center; }
+.content-03 th { border-bottom: 2px solid #666; height: 50px; }
+.content-03 td { border-bottom: 1px solid #bebebe; height: 50px; }
+.content-03 h3 { font-size: 40px; margin-bottom: 40px; text-align: center; }
+
+.content-04 #map { height: 800px; }
 
 /* public class */
 span.middle { display: inline-block; height: 100%; width: 0; font-size: 0; vertical-align: middle; }

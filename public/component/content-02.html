@@ -18,6 +18,8 @@
 	</div>
     {{bus.graphData ? bus.graphData.length : 0}}
     <div class="graph">
-    	<canvas id="graph"></canvas>
+    	<div class="graph_mask" v-if="bus.graphLoading == false">Loading..</div>
+    	<div class="graph_mask" v-if="bus.graphNone == true">No saved data.</div>
+    	<canvas v-else id="graph"></canvas>
     </div>
 </section>

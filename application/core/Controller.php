@@ -1,7 +1,7 @@
 <?php
 	class Controller {
 		private $callUrl = "http://aws.airtumbler.co:9350/ATDataService";
-		function run(){
+		static function run(){
 			$obj = new Controller();
 			$obj->init();
 			$obj->index();

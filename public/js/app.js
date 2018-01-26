@@ -14,8 +14,19 @@ var bus = new Vue({
 		}()),
 		activeData:null,
 		graphPoint:null,
-		graphData:null,
-		graphType:'TEMP'
+		graphData:[],
+		graphDataPart:[],
+		graphType:'TEMP',
+		graphLoading:false,
+		graphNone:true,
+		unit:{
+			'CIAQI':"",
+			'TEMP':" ℃",
+			'HUM':" %",
+			'DUST_IDX':" μg",
+			'CO2_IDX':" ppm",
+			'TVOC_IDX':" ppb",
+		}
 	},
 	computed:{
 	},
@@ -31,15 +42,28 @@ var bus = new Vue({
 				start_date = $(".datepicker.start").val();
 				end_date = $(".datepicker.end").val();
 			}
+			_this.graphLoading = false;
+			_this.graphNone = false;
 			$.ajax({
 				type:'get',
 				url:'./getGraph',
 				data:{srno:_this.activeData.DVC_SRNO,start:start_date,end:end_date},
 				success:function(data){
+					console.log('test');
 					var jsonData = JSON.parse(data);
-					_this.graphData = jsonData.data;
-					_this.graphPoint = jsonData.point;
-					graphCreate();
+					if(jsonData.data.length){
+						_this.graphData = jsonData.data;
+						_this.graphPoint = jsonData.point;
+						_this.graphDataPart = jsonData.data.reverse().slice(0,100);
+						graphCreate();
+						_this.graphNone=false;
+					} else {
+						_this.graphData = [];
+						_this.graphPoint = {};
+						_this.graphDataPart = [];
+						_this.graphNone=true;
+					}
+					_this.graphLoading = true;
 				}
 			})
 		}
@@ -74,6 +98,11 @@ function app(){
 }
 
 function site(){
+	var timer = setTimeout(function(){
+		clearTimeout(timer);
+		bus.getGraph();
+		initMap();
+	}, 1000*30)
 	return {
 		'site-header':{
 			template:getTemplate('site-header'),
@@ -169,7 +198,7 @@ function site(){
 				db.getDevice(option);
 				setInterval(function(){
 					db.getDevice(option)
-				},1000*6000);
+				},1000*60*60);
 			}
 		},
 		'content-02':{
@@ -185,7 +214,7 @@ function site(){
 						{id:'4',type:'DUST_IDX'},
 						{id:'5',type:'CO2_IDX'},
 						{id:'6',type:'TVOC_IDX'},
-					]
+					],
 				}
 			},
 			computed:{
@@ -214,6 +243,24 @@ function site(){
 				$(".datepicker.start").datepicker();
 				$(".datepicker.end").datepicker({"minDate":new Date()})
 				$(".datepicker").val(getNow());
+			}
+		},
+		'content-03':{
+			template:getTemplate('content-03'),
+			methods:{
+				dataVal:function(data){
+					return parseInt(parseFloat(data)*100)/100;
+				},
+				dateFormat:function(data){
+					data = data.replace(/\-/gi,"/").slice(0,16);
+					return data;
+				}
+			}
+		},
+		'content-04':{
+			template:getTemplate('content-04'),
+			mounted:function(){
+				google.maps.event.addDomListener(window, 'load', initMap);
 			}
 		}
 	}
@@ -331,7 +378,6 @@ function graphCreate(){
 			if(cnt != 0) avg = avg/cnt;
 			renderData.push(avg);
 			renderTime.push(data[i]['UPD_DT']);
-			console.log(avg);
 		}
 		width = renderData.length;
 	}
@@ -344,11 +390,12 @@ function graphCreate(){
 	var rowHeight = parseInt((canvas.height)/5);
 	var statHeight = max/5;
 	var commentMax = max+min;
-	context.font = "12px Arial";
+	context.font = "15px Arial";
 	context.fillStyle = "#666";
 	for(var i=0;i<=5; i++){
 		var row = canvas.height - (rowHeight*i) + plusHeight;
 		var text = parseInt((min+(statHeight*i))*100)/100
+		text += bus.unit[type];
 		context.beginPath();
 		context.moveTo(0,row);
 		context.lineTo(canvas.width,row);
@@ -388,12 +435,142 @@ function graphCreate(){
 		context.beginPath();
 		context.moveTo(left, prev_stat);
 		context.lineTo(left+move_left_by, the_stat);
-		context.lineWidth = 1;
+		context.lineWidth = 3;
 		context.lineCap = 'round';
 		context.lineJoin = 'round';
-		context.strokeStyle = '#000';
+		context.strokeStyle = '#339cd0';
 		context.stroke();
 		prev_stat = the_stat;
 		left += move_left_by;
 	}
+}
+
+function initMap() {
+	var x = bus.activeData.DVC_GIS_X;
+	var y = bus.activeData.DVC_GIS_Y;
+	map = new google.maps.Map(document.getElementById('map'), {
+	  zoom: 18,
+	  center: new google.maps.LatLng(y,x),
+	  mapTypeId: 'roadmap'
+	});
+	var 
+		indoorTemplate = getTemplate('indoorInfo'),
+		outdoorTemplate = getTemplate('outdoorInfo'),
+		indoorPositionList = [],
+		outdoorPositionList = [],
+		prevWindow = false;
+	bus.indoor.forEach(function(indoor){
+		var x = indoor.DVC_GIS_X;
+		var y = indoor.DVC_GIS_Y;
+		if(indoorPositionList.indexOf(x+"/"+y) != -1) return;
+		var pos = new google.maps.LatLng(y, x);
+		indoorPositionList.push(x+"/"+y);
+		var marker = new google.maps.Marker({
+			position: pos,
+			icon: 'img/icon-tumbler2.png',
+			map: map,
+		});
+		console.log(marker)
+		var template = indoorTemplate
+						.replace('{{name}}',indoor.DVC_NM)
+						.replace('{{color}}',indoor.color)
+						.replace('{{temp}}',indoor.temp)
+						.replace('{{hum}}',indoor.hum)
+						.replace('{{dust}}',indoor.dust)
+						.replace('{{co2}}',indoor.co2)
+						.replace('{{tvoc}}',indoor.tvoc)
+						.replace('{{score}}',indoor.score)
+		var infowindow = new google.maps.InfoWindow({
+			content: template,
+		});
+		marker.addListener('click',function(){
+			if(prevWindow != false) prevWindow.close();
+			prevWindow = infowindow;
+			infowindow.open(map, marker);
+		})
+		makerCircle.prototype = new google.maps.OverlayView();
+		makerCircle.prototype.door = indoor;
+		makerCircle.prototype.draw = draw;
+		makerCircle.prototype.remove = remove;
+		makerCircle.prototype.getPosition = getPosition;
+		makerCircle.prototype.onAdd = onAdd;
+		var circle = new makerCircle(map,pos);
+	})
+	bus.outdoor.forEach(function(outdoor){
+		var x = outdoor.DVC_GIS_X;
+		var y = outdoor.DVC_GIS_Y;
+		if(outdoorPositionList.indexOf(x+"/"+y) != -1) return;
+		var pos = new google.maps.LatLng(y, x);
+		outdoorPositionList.push(x+"/"+y);
+		var marker = new google.maps.Marker({
+			position: pos,
+			icon: 'img/icon-tumbler1.png',
+			map: map,
+		});
+		console.log(marker)
+		var template = outdoorTemplate
+						.replace('{{name}}',outdoor.DVC_NM)
+						.replace('{{color}}',outdoor.color)
+						.replace('{{temp}}',outdoor.temp)
+						.replace('{{hum}}',outdoor.hum)
+						.replace('{{dust}}',outdoor.dust)
+						.replace('{{score}}',outdoor.score)
+		var infowindow = new google.maps.InfoWindow({
+			content: template,
+		});
+		marker.addListener('click',function(){
+			if(prevWindow != false) prevWindow.close();
+			prevWindow = infowindow;
+			infowindow.open(map, marker);
+		})
+		makerCircle.prototype = new google.maps.OverlayView();
+		makerCircle.prototype.door = outdoor;
+		makerCircle.prototype.draw = draw;
+		makerCircle.prototype.remove = remove;
+		makerCircle.prototype.getPosition = getPosition;
+		makerCircle.prototype.onAdd = onAdd;
+		var circle = new makerCircle(map,pos);
+	})
+	function makerCircle(map, pos){
+		this.latlng = pos;
+		this.setMap(map);
+	}
+	function onAdd(){
+		var self = this;
+		var div = this.div;
+		var color = {
+			'color1':'#339cd0',
+			'color2':'#8fd400',
+			'color3':'#ffbe23',
+			'color4':'#ff6961',
+		}
+		div = this.div = document.createElement('div');
+		div.style.width = '40px';
+		div.style.height = '40px';
+		div.style.borderRadius = '20px';
+		div.style.color = '#fff';
+		div.style.fontSize = '18px';
+		div.style.lineHeight = '40px';
+		div.style.textAlign = 'center';
+		div.style.position = 'absolute';
+		div.style.zIndex = 1000;
+		div.style.backgroundColor = color[this.door.color];
+		div.innerHTML = this.door.score
+	}
+	function draw(){
+		var point = this.getProjection().fromLatLngToDivPixel(this.latlng);
+		this.div.style.left = (point.x+10) + 'px'
+		this.div.style.top = (point.y-20) + 'px'
+		var panes = this.getPanes();
+        panes.overlayImage.appendChild(this.div);
+	}
+	function remove() {
+		if (this.div) {
+			this.div.parentNode.removeChild(this.div);
+			this.div = null;
+		}
+	}
+	function getPosition() {
+		return this.latlng;	
+	};
 }
