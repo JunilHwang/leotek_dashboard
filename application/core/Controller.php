@@ -84,13 +84,13 @@
 					$data['hum'] = 0;
 					if($device_info->Data){
 						$score = ceil((intval($device_info->Data->CIAQI)/450)*100);
-						if($score < 25){
+						if($score <= 25){
 							$color = "color4";
-						} else if($score < 50){
+						} else if($score <= 50){
 							$color = "color3";
-						} else if($score < 75){
+						} else if($score <= 75){
 							$color = "color2";
-						} else if($score < 100){
+						} else if($score <= 100){
 							$color = "color1";
 						}
 						$data['co2'] = $device_info->Data->CO2_IDX;

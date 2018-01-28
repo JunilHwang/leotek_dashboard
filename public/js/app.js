@@ -16,7 +16,7 @@ var bus = new Vue({
 		graphPoint:null,
 		graphData:[],
 		graphDataPart:[],
-		graphType:'TEMP',
+		graphType:'CIAQI',
 		graphLoading:false,
 		graphNone:true,
 		unit:{
@@ -26,7 +26,10 @@ var bus = new Vue({
 			'DUST_IDX':" μg",
 			'CO2_IDX':" ppm",
 			'TVOC_IDX':" ppb",
-		}
+		},
+		map:null,
+		infowindow:{},
+		prevwindow:false
 	},
 	computed:{
 	},
@@ -55,6 +58,7 @@ var bus = new Vue({
 						_this.graphData = jsonData.data;
 						_this.graphPoint = jsonData.point;
 						_this.graphDataPart = jsonData.data.reverse().slice(0,100);
+						jsonData.data.reverse();
 						graphCreate();
 						_this.graphNone=false;
 					} else {
@@ -198,7 +202,7 @@ function site(){
 				db.getDevice(option);
 				setInterval(function(){
 					db.getDevice(option)
-				},1000*60*60);
+				},1000*60);
 			}
 		},
 		'content-02':{
@@ -259,8 +263,65 @@ function site(){
 		},
 		'content-04':{
 			template:getTemplate('content-04'),
+			data:function(){
+				return {
+					sortable:false
+				}
+			},
+			data:function(){
+				return {
+					search_key:''
+				}
+			},
+			computed:{
+				deviceList:function(){
+					var search_list = [];
+					if(this.search_key.length == 0){
+						search_list = bus.device;
+					} else {
+						var obj;
+						for(var i=0, len = bus.device.length; i<len; i++){
+							obj = bus.device[i];
+							if(obj['DVC_NM'].indexOf(this.search_key) != -1){
+								search_list.push(obj);
+							}
+						}
+					}
+					return search_list;
+				}
+			},
 			mounted:function(){
 				google.maps.event.addDomListener(window, 'load', initMap);
+			},
+			methods:{
+				sortDevice:function(){
+					if(!this.sortable){
+						bus.device.sort(function(a, b) {
+							var nameA = a.DVC_NM.toUpperCase(); // ignore upper and lowercase
+							var nameB = b.DVC_NM.toUpperCase(); // ignore upper and lowercase
+							if (nameA < nameB) {
+								return -1;
+							}
+							if (nameA > nameB) {
+								return 1;
+							}
+							return 0;
+						});
+						this.sortable = true
+					}  else {
+						bus.device.reverse();
+					}
+				},
+				selectDevice:function(obj){
+					bus.map.setCenter({lat:obj.DVC_GIS_Y, lng:obj.DVC_GIS_X});
+					if(bus.infowindow[obj.DVC_NM]){
+						var infowindow = bus.infowindow[obj.DVC_NM][0];
+						var marker = bus.infowindow[obj.DVC_NM][1];
+						if(bus.prevwindow != false) bus.prevwindow.close();
+						bus.prevwindow = infowindow;
+						infowindow.open(bus.map, marker);
+					}
+				}
 			}
 		}
 	}
@@ -297,26 +358,6 @@ function getTemplate(file,option){
 }
 
 $(window).on("load resize",customScrollLoad)*/
-
-$(document)
-.on("click","a[href='#']",function(e){
-	e.preventDefault();
-})
-.on("change",".datepicker",function(){
-	var selectedDate = getDate(this);
-	if($(this).hasClass("start")){
-		$(".datepicker.end").datepicker("option","minDate",selectedDate);
-	} else {
-		$(".datepicker.start").datepicker("option","maxDate",selectedDate);
-	}
-})
-$.datepicker.setDefaults({
-    dateFormat: 'yy-mm-dd',
-    showMonthAfterYear: true,
-    changeMonth:true,
-    changeYear:true,
-    maxDate:new Date()
-})
 
 function getDate( element ) {
 	var date = null
@@ -448,21 +489,21 @@ function graphCreate(){
 function initMap() {
 	var x = bus.activeData.DVC_GIS_X;
 	var y = bus.activeData.DVC_GIS_Y;
-	map = new google.maps.Map(document.getElementById('map'), {
-	  zoom: 18,
+	var map = new google.maps.Map(document.getElementById('map'), {
+	  zoom: 19,
 	  center: new google.maps.LatLng(y,x),
 	  mapTypeId: 'roadmap'
 	});
+	bus.map = map;
 	var 
 		indoorTemplate = getTemplate('indoorInfo'),
 		outdoorTemplate = getTemplate('outdoorInfo'),
 		indoorPositionList = [],
-		outdoorPositionList = [],
-		prevWindow = false;
+		outdoorPositionList = [];
 	bus.indoor.forEach(function(indoor){
 		var x = indoor.DVC_GIS_X;
 		var y = indoor.DVC_GIS_Y;
-		if(indoorPositionList.indexOf(x+"/"+y) != -1) return;
+		//if(indoorPositionList.indexOf(x+"/"+y) != -1) return;
 		var pos = new google.maps.LatLng(y, x);
 		indoorPositionList.push(x+"/"+y);
 		var marker = new google.maps.Marker({
@@ -470,7 +511,6 @@ function initMap() {
 			icon: 'img/icon-tumbler2.png',
 			map: map,
 		});
-		console.log(marker)
 		var template = indoorTemplate
 						.replace('{{name}}',indoor.DVC_NM)
 						.replace('{{color}}',indoor.color)
@@ -484,10 +524,11 @@ function initMap() {
 			content: template,
 		});
 		marker.addListener('click',function(){
-			if(prevWindow != false) prevWindow.close();
-			prevWindow = infowindow;
+			if(bus.prevwindow != false) bus.prevwindow.close();
+			bus.prevwindow = infowindow;
 			infowindow.open(map, marker);
 		})
+		bus.infowindow[indoor.DVC_NM] = [infowindow,marker];
 		makerCircle.prototype = new google.maps.OverlayView();
 		makerCircle.prototype.door = indoor;
 		makerCircle.prototype.draw = draw;
@@ -499,7 +540,7 @@ function initMap() {
 	bus.outdoor.forEach(function(outdoor){
 		var x = outdoor.DVC_GIS_X;
 		var y = outdoor.DVC_GIS_Y;
-		if(outdoorPositionList.indexOf(x+"/"+y) != -1) return;
+		//if(outdoorPositionList.indexOf(x+"/"+y) != -1) return;
 		var pos = new google.maps.LatLng(y, x);
 		outdoorPositionList.push(x+"/"+y);
 		var marker = new google.maps.Marker({
@@ -507,7 +548,6 @@ function initMap() {
 			icon: 'img/icon-tumbler1.png',
 			map: map,
 		});
-		console.log(marker)
 		var template = outdoorTemplate
 						.replace('{{name}}',outdoor.DVC_NM)
 						.replace('{{color}}',outdoor.color)
@@ -519,10 +559,11 @@ function initMap() {
 			content: template,
 		});
 		marker.addListener('click',function(){
-			if(prevWindow != false) prevWindow.close();
-			prevWindow = infowindow;
+			if(bus.prevwindow != false) bus.prevwindow.close();
+			bus.prevwindow = infowindow;
 			infowindow.open(map, marker);
 		})
+		bus.infowindow[outdoor.DVC_NM] = [infowindow,marker];
 		makerCircle.prototype = new google.maps.OverlayView();
 		makerCircle.prototype.door = outdoor;
 		makerCircle.prototype.draw = draw;
@@ -531,6 +572,12 @@ function initMap() {
 		makerCircle.prototype.onAdd = onAdd;
 		var circle = new makerCircle(map,pos);
 	})
+	map.addListener('click', function() {
+    	if(bus.prevwindow != false) bus.prevwindow.close();
+    });
+	map.addListener('drag', function() {
+    	if(bus.prevwindow != false) bus.prevwindow.close();
+    });
 	function makerCircle(map, pos){
 		this.latlng = pos;
 		this.setMap(map);
@@ -574,3 +621,54 @@ function initMap() {
 		return this.latlng;	
 	};
 }
+
+
+$(document)
+.on("click","a[href='#']",function(e){
+	e.preventDefault();
+})
+.on("change",".datepicker",function(){
+	var selectedDate = getDate(this);
+	if($(this).hasClass("start")){
+		$(".datepicker.end").datepicker("option","minDate",selectedDate);
+	} else {
+		$(".datepicker.start").datepicker("option","maxDate",selectedDate);
+	}
+})
+.on("click",".gnb li",function(){
+	var target = $(this).data("target");
+	var _this = $(this);
+	if($(target).length){
+		var top = $(target).offset().top-120;
+		$("html,body").stop().animate({
+			scrollTop:top
+		},1000)
+	}
+})
+$.datepicker.setDefaults({
+    dateFormat: 'yy-mm-dd',
+    showMonthAfterYear: true,
+    changeMonth:true,
+    changeYear:true,
+    maxDate:new Date()
+})
+
+$(window).on("scroll load",function(){
+	if($(".content-01,.content-02,.content-03,.content-04").length){
+		var ofs1 = $(".content-01").offset().top
+		var ofs2 = $(".content-04").offset().top
+		var ofs3 = ofs2 + $(".content-04").height();
+		var wt = $(window).scrollTop() + 140;
+		if(wt > ofs1 && wt < ofs2){
+			if(!$(".target-content-01.active").length){
+				$(".gnb .active").removeClass("active");
+				$(".target-content-01").addClass("active");
+			}
+		} else if(wt > ofs2){
+			if(!$(".target-content-04.active").length){
+				$(".gnb .active").removeClass("active");
+				$(".target-content-04").addClass("active");
+			}
+		}
+	}
+})
