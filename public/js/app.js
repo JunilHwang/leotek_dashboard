@@ -371,6 +371,7 @@ function getNow(){
 	var month = date.getMonth()+1;
 	var day = date.getDate();
 	if(month < 10) month = "0"+month;
+	if(day < 10) day = "0"+day;
 	var now = year+"-"+month+"-"+day;
 	return now;
 }
@@ -431,7 +432,12 @@ function graphCreate(){
 	var rowHeight = parseInt((canvas.height)/5);
 	var statHeight = max/5;
 	var commentMax = max+min;
-	context.font = "15px Arial";
+	var fs = 15;
+	var fontStyle = "15px Arial";
+	if($(window).width() < 1200){
+		fs = fs*($(window).width()/1200)  + "px";
+	}
+	context.font = fs+"px Arial";
 	context.fillStyle = "#666";
 	for(var i=0;i<=5; i++){
 		var row = canvas.height - (rowHeight*i) + plusHeight;
