@@ -219,6 +219,7 @@ img { max-width: 100%; max-height: 100%; border: 0; margin: 0; padding: 0; }
   .content-02 .selectDate input { border: none; font-size: 13px; padding: 13px 10px 10px; width: 100px; }
   .content-02 .graph_type { margin-bottom: 30px; } }
 @media (max-width: 767px) { .content-02 .graph { padding-bottom: 100%; }
+  .content-02 .tab { justify-content: center; }
   .content-02 .graph_top { display: flex; justify-content: center; align-items: center; flex-flow: column; } }
 
 .content-03 .list { background: #FFF; box-shadow: 0 0 10px #bbb; padding: 30px; border-radius: 10px; }
